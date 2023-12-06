@@ -9,6 +9,21 @@
 bool is_symbol(const std::string &c) {
   std::string symbols = "!@#$%^&*()-+=[]{};:,<>/?"
                         "|~";
+  if (c.size() > 1) {
+    return false;
+  }
+  for (char ch : c) {
+    if (symbols.find(ch) != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+bool is_gear(const std::string &c) {
+  std::string symbols = "*";
+  if (c.size() > 1) {
+    return false;
+  }
   for (char ch : c) {
     if (symbols.find(ch) != std::string::npos) {
       return true;
@@ -17,7 +32,10 @@ bool is_symbol(const std::string &c) {
   return false;
 }
 bool is_number(const std::string &s) {
+  if (s.empty())
+    return false;
   std::string::const_iterator it = s.begin();
+
   while (it != s.end() && std::isdigit(*it))
     ++it;
   return !s.empty() && it == s.end();
@@ -49,8 +67,10 @@ void extractNumbersFromRow(std::vector<std::vector<std::string>> &matrix,
       return;
     }
   }
+
   // below
   if (*i < matrix.size() - 1) {
+
     if (is_symbol(matrix[*i + 1][*j - digits]) ||
         is_symbol(matrix[*i + 1][(*j - digits) + 1]) ||
         is_symbol(matrix[*i + 1][(*j - digits) + 2])) {
@@ -58,6 +78,7 @@ void extractNumbersFromRow(std::vector<std::vector<std::string>> &matrix,
       return;
     }
   }
+
   // right
   if (*j < matrix.size()) {
     if (is_symbol(matrix[*i][*j])) {
@@ -74,7 +95,7 @@ void extractNumbersFromRow(std::vector<std::vector<std::string>> &matrix,
     }
   }
   // diagonal left up
-  if (*i > 0 && *j > 0 && *j < matrix.size()) {
+  if (*i > 0 && *j > 0 && *j <= matrix.size()) {
     if (is_symbol(matrix[*i - 1][*j - digits - 1])) {
       num.push_back(std::stoi(number));
       return;
@@ -131,14 +152,14 @@ int main(int argc, char *argv[]) {
   for (size_t i = 0; i < matrix.size(); i++) {
     for (size_t j = 0; j < matrix[i].size(); j++)
       if (is_number(matrix[i][j])) {
-        // if the digit is not a dot, we need to keep looking so find the last
-        // digit of number and then we can convert it to int
+
         extractNumbersFromRow(matrix, numbers, &i, &j);
       }
   }
 
   std::vector<std::vector<std::string>> gearMatrix;
   std::vector<int> gearRatio;
+
   std::cout << "Sum: " << std::accumulate(numbers.begin(), numbers.end(), 0)
             << std::endl;
 
@@ -156,7 +177,6 @@ int main(int argc, char *argv[]) {
           number += matrix[i][k];
           k++;
         }
-        // add the number equal to number of digits to the matrix
 
         gearMatrix[i].push_back(number);
 
@@ -171,87 +191,98 @@ int main(int argc, char *argv[]) {
       }
   }
 
+  std::vector<std::string> tv;
   for (size_t i = 0; i < gearMatrix.size(); i++) {
     for (size_t j = 0; j < gearMatrix[i].size(); j++) {
-      std::cout << gearMatrix[i][j];
-    }
-    std::cout << std::endl;
-  }
-  for (size_t i = 0; i < gearMatrix.size(); i++) {
-    for (size_t j = 0; j < gearMatrix[i].size(); j++) {
-      if (is_symbol(matrix[i][j])) {
-        // check whether the symbol is touching a two numbers if it is muliply
-        // them and add to gearRatio above
+      if (is_gear(matrix[i][j])) {
+
         std::vector<int> temp_array;
 
         // above
-        if (i > 0) {
+        if (i != 0) {
           if (is_number(gearMatrix[i - 1][j])) {
             temp_array.push_back(std::stoi(gearMatrix[i - 1][j]));
           }
         }
         // below
-        if (i < gearMatrix.size() - 1) {
-          if (is_number(gearMatrix[i + 1][j])) {
-            temp_array.push_back(std::stoi(gearMatrix[i + 1][j]));
-          }
+  if (i != gearMatrix.size() - 1) {
+        if (is_number(gearMatrix[i + 1][j])) {
+          temp_array.push_back(std::stoi(gearMatrix[i + 1][j]));
         }
+  }
         // right
-        if (j < gearMatrix.size()) {
-          if (is_number(gearMatrix[i][j + 1])) {
-            temp_array.push_back(std::stoi(gearMatrix[i][j + 1]));
-          }
+    if (j != gearMatrix[i].size() - 1) {
+        if (is_number(gearMatrix[i][j + 1])) {
+          temp_array.push_back(std::stoi(gearMatrix[i][j + 1]));
         }
+    }
         // left
-        if (j != 0) {
-          if (is_number(gearMatrix[i][j - 1])) {
-            temp_array.push_back(std::stoi(gearMatrix[i][j - 1]));
-          }
+
+        if (is_number(gearMatrix[i][j - 1])) {
+          temp_array.push_back(std::stoi(gearMatrix[i][j - 1]));
         }
+
         // diagonal left up
-        if (i > 0 && j > 0 && j < gearMatrix.size()) {
+        if (i != 0) {
           if (is_number(gearMatrix[i - 1][j - 1])) {
             temp_array.push_back(std::stoi(gearMatrix[i - 1][j - 1]));
           }
         }
-        // diagonal right up
-        if (i > 0 && j < gearMatrix[i].size()) {
+        if (i != 0) {
+          if (j != gearMatrix[i].size() - 1) {
+          // diagonal right up
           if (is_number(gearMatrix[i - 1][j + 1])) {
             temp_array.push_back(std::stoi(gearMatrix[i - 1][j + 1]));
           }
+          }
         }
         // diagonal left down
-        if (i < gearMatrix.size() - 1 && j > 0) {
-          if (is_number(gearMatrix[i + 1][j - 1])) {
-            temp_array.push_back(std::stoi(gearMatrix[i + 1][j - 1]));
-          }
+      if (i != gearMatrix.size() - 1) {
+        if (is_number(gearMatrix[i + 1][j - 1])) {
+          temp_array.push_back(std::stoi(gearMatrix[i + 1][j - 1]));
         }
+      }
         // diagonal right down
-        if (i < gearMatrix.size() - 1 && j < gearMatrix.size()) {
-          if (is_number(gearMatrix[i + 1][j + 1])) {
-            temp_array.push_back(std::stoi(gearMatrix[i + 1][j + 1]));
-          }
+if (i != gearMatrix.size() - 1) 
+  if (j != gearMatrix[i].size() - 1)
+  {
+        if (is_number(gearMatrix[i + 1][j + 1])) {
+          temp_array.push_back(std::stoi(gearMatrix[i + 1][j + 1]));
         }
-        // check if ever val is equal in temp_array
-        if (std::equal(temp_array.begin() + 1, temp_array.end(),
-                       temp_array.begin())) {
-          if (temp_array.size() > 2) {
+}
+      
+if (!temp_array.empty()) {
+  if (std::equal(temp_array.begin() + 1, temp_array.end(), temp_array.begin())) {
+    if (temp_array.size() >= 2) {
+      gearRatio.push_back(temp_array[0] * temp_array[1]);
+      std::string temp = std::to_string(temp_array[0]) + matrix[i][j] + std::to_string(temp_array[1]);
+      tv.push_back(temp);
+      break;
+    }
+  }
+}
+
+        if (temp_array.size() == 4) {
+
+        } else {
+          std::sort(temp_array.begin(), temp_array.end());
+          temp_array.erase(std::unique(temp_array.begin(), temp_array.end()),
+                           temp_array.end());
+          if (temp_array.size() == 2) {
+            std::string temp = std::to_string(temp_array[0]) + matrix[i][j] +
+                               std::to_string(temp_array[1]);
+            tv.push_back(temp);
+
             gearRatio.push_back(temp_array[0] * temp_array[1]);
-            break;
           }
-        }
-
-        std::sort(temp_array.begin(), temp_array.end());
-        temp_array.erase(std::unique(temp_array.begin(), temp_array.end()),
-                         temp_array.end());
-        if (temp_array.size() >= 2) {
-          // remove duplicates
-
-          gearRatio.push_back(temp_array[0] * temp_array[1]);
-          break;
         }
       }
     }
+  }
+  int p = 0;
+  for (std::string i : tv) {
+    std::cout << p << ": " << i << std::endl;
+    p++;
   }
   std::cout << "Gear Ratio: "
             << std::accumulate(gearRatio.begin(), gearRatio.end(), 0)
